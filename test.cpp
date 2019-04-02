@@ -1,13 +1,15 @@
 #include <variant>
 #include <iostream>
 
-enum Point : unsigned short
+enum Player : unsigned short
 {
-    _love, _15, _30, _40 
+    _PlayerOne, _PlayerTwo
 };
 
-struct PlayerOne {};
-struct PlayerTwo {};
+enum Point : unsigned short
+{
+    _love, _15, _30
+};
 
 struct Points
 {
@@ -15,21 +17,27 @@ struct Points
     Point p2{_love};
 };
 
+struct Forty
+{
+    Player player;
+    Point p2;
+};
+
 struct Deuce
 {
 };
 
-template<typename Player>
 struct Advantage
 {
+    Player player;
 };
 
-template<typename Player>
 struct Game
 {
+    Player player;
 };
 
-using Score = std::variant<Points, Deuce, Advantage<PlayerOne>, Advantage<PlayerTwo>, Game<PlayerOne>, Game<PlayerTwo>>;
+using Score = std::variant<Points, Forty, Deuce, Advantage, Game>;
 
 void printScore(const Points& score)
 {
@@ -40,11 +48,21 @@ void printScore(const Points& score)
             case _love: return "love";
             case _15: return "15";
             case _30: return "30";
-            case _40: return "40";
         }
     };
 
     std::cout << point2string(score.p1) << " : " << point2string(score.p2) << '\n';
+}
+
+std::string player2string(Player player)
+{
+    switch(player)
+    {
+        case _PlayerOne:
+            return "one";
+        case _PlayerTwo:
+            return "two";
+    }
 }
 
 void printScore(const Deuce& score)
@@ -52,24 +70,14 @@ void printScore(const Deuce& score)
     std::cout << "Deuce\n";
 }
 
-void printScore(const Advantage<PlayerOne>& score)
+void printScore(const Advantage& score)
 {
-    std::cout << "Advantage player one\n";
+    std::cout << "Advantage player " << player2string(score.player) << "\n";
 }
 
-void printScore(const Advantage<PlayerTwo>& score)
+void printScore(const Game& score)
 {
-    std::cout << "Advantage player one\n";
-}
-
-void printScore(const Game<PlayerOne>& score)
-{
-    std::cout << "Game player one\n";
-}
-
-void printScore(const Game<PlayerTwo>& score)
-{
-    std::cout << "Game player one\n";
+    std::cout << "Game player " << player2string(score.player) << "\n";
 }
 
 Score pointPlayerOne(const Points& score)
@@ -77,12 +85,8 @@ Score pointPlayerOne(const Points& score)
     switch(score.p1)
     {
         case _love: return Points{_15, score.p2};
-        case _15: return Points{_30, score.p2};
-        case _30:
-            if(score.p2 == _40)
-                return Deuce();
-            return Points{_40, score.p2};
-        case _40: return Game<PlayerOne>();
+        case _15:   return Points{_30, score.p2};
+        case _30:   return Forty{_PlayerOne, score.p2};
     }
 }
 
@@ -91,43 +95,37 @@ Score pointPlayerTwo(const Points& score)
     switch(score.p2)
     {
         case _love: return Points{score.p1, _15};
-        case _15: return Points{score.p1, _30};
-        case _30:
-            if(score.p1 == _40)
-                return Deuce();
-            return Points{score.p2, _40};
-        case _40: return Game<PlayerTwo>();
+        case _15:   return Points{score.p1, _30};
+        case _30:   return Forty{_PlayerTwo, score.p1};
     }
 }
 
 Score pointPlayerOne(const Deuce& score)
 {
-    return Advantage<PlayerOne>();
+    return Advantage{_PlayerOne};
 }
 
 Score pointPlayerTwo(const Deuce& score)
 {
-    return Advantage<PlayerTwo>();
+    return Advantage{_PlayerTwo};
 }
 
-Score pointPlayerOne(const Advantage<PlayerOne>& score)
+Score pointPlayerOne(const Advantage& score)
 {
-    return Game<PlayerOne>();
+    switch(score.player)
+    {
+        case _PlayerOne: return Game{_PlayerOne};
+        case _PlayerTwo: return Deuce();
+    }
 }
 
-Score pointPlayerTwo(const Advantage<PlayerOne>& score)
+Score pointPlayerTwo(const Advantage& score)
 {
-    return Deuce();
-}
-
-Score pointPlayerTwo(const Advantage<PlayerTwo>& score)
-{
-    return Game<PlayerTwo>();
-}
-
-Score pointPlayerOne(const Advantage<PlayerTwo>& score)
-{
-    return Deuce();
+    switch(score.player)
+    {
+        case _PlayerOne: return Deuce();
+        case _PlayerTwo: return Game{_PlayerTwo};
+    }
 }
 
 Score pointPlayerOne(const Score& score)
