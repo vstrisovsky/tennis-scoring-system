@@ -130,16 +130,12 @@ Score pointPlayerTwo(const Advantage& score)
 
 Score pointPlayerOne(const Score& score)
 {
-    Score result;
-    std::visit([&result](const auto& s){ result = pointPlayerOne(s);}, score);
-    return result;
+    return std::visit([](const auto& s){ return pointPlayerOne(s);}, score);
 }
 
 Score pointPlayerTwo(const Score& score)
 {
-    Score result;
-    std::visit([&result](const auto& s){ result = pointPlayerTwo(s);}, score);
-    return result;
+    return std::visit([](const auto& s){ return pointPlayerTwo(s);}, score);
 }
 
 void printScore(const Score& score)
